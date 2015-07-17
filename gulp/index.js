@@ -46,18 +46,22 @@ var s3sync = require('./s3sync');
 
 var paths = {
 	input: 'src/**/*',
-	output: 'dist/',
+	output: 'build/',
+	dist: {
+		input: 'src/**/*',
+		output: 'build/dist/'
+	},
 	scripts: {
 		input: 'src/js/*',
-		output: 'dist/js/'
+		output: 'build/dist/js/'
 	},
 	styles: {
 		input: 'src/sass/**/*.{scss,sass}',
-		output: 'dist/css/'
+		output: 'build/dist/css/'
 	},
 	svgs: {
 		input: 'src/svg/*',
-		output: 'dist/svg/'
+		output: 'build/dist/svg/'
 	},
 	static: 'src/static/**',
 	test: {
@@ -69,7 +73,7 @@ var paths = {
 	},
 	docs: {
 		input: 'src/docs/*.{html,md,markdown}',
-		output: 'docs/',
+		output: 'build/docs/',
 		templates: 'src/docs/templates/',
 		assets: 'src/docs/assets/**'
 	}
@@ -102,6 +106,25 @@ var banner = {
 /**
  * Gulp Taks
  */
+
+ // Remove prexisting content from output and test folders
+gulp.task('clean:dist', function () {
+ 	del.sync([
+ 		paths.dist.output,
+ 		paths.test.coverage,
+ 		paths.test.results
+ 	]);
+});
+
+ // Remove prexisting content from docs folder
+gulp.task('clean:docs', function () {
+	return del.sync(paths.docs.output);
+});
+
+// Remove all build output
+gulp.task('clean', ['clean:dist', 'clean:docs'], function() {
+	return del.sync(paths.output);
+});
 
 // Lint, minify, and concatenate scripts
 gulp.task('build:scripts', ['clean:dist'], function() {
@@ -184,15 +207,6 @@ gulp.task('lint:scripts', function () {
 		.pipe(jshint.reporter('jshint-stylish'));
 });
 
-// Remove prexisting content from output and test folders
-gulp.task('clean:dist', function () {
-	del.sync([
-		paths.output,
-		paths.test.coverage,
-		paths.test.results
-	]);
-});
-
 // Run unit tests
 gulp.task('test:scripts', function() {
 	return gulp.src([paths.test.input].concat([paths.test.spec]))
@@ -229,11 +243,6 @@ gulp.task('copy:assets', ['clean:docs'], function() {
 	return gulp.src(paths.docs.assets)
 		.pipe(plumber())
 		.pipe(gulp.dest(paths.docs.output + '/assets'));
-});
-
-// Remove prexisting content from docs folder
-gulp.task('clean:docs', function () {
-	return del.sync(paths.docs.output);
 });
 
 // Spin up livereload server and listen for file changes
